@@ -1,0 +1,65 @@
+version: "3.8"
+
+networks:
+  jupyter:
+    ipam:
+      driver: default
+      config:
+        - subnet: 128.25.7.0/24
+
+services:
+  jupyterhub:
+    build: jupyterhub
+    image: jupyterhub_mod
+    container_name: jupyterhub
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/userdata/config/jupyterhub/db:/srv/jupyterhub/db"
+    environment:
+      - MY_PAAS_JHUB_IP
+      - DOCKER_NOTEBOOK_DIR
+      - MY_PAAS_JHUB_HOST
+      - DOCKER_NETWORK_NAME
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      - "xyz.kmahyyg.description=JupyterHub Modified"
+      - "traefik.http.routers.jhub.rule=Host(`${MY_PAAS_JHUB_HOST}`)"
+      - "traefik.http.routers.jhub.entrypoints=websecure,web"
+    restart: on-failure
+    networks:
+      - jupyter
+
+  jupyterlab_imgbuilder:
+    build: jupyterlab-singleuser
+    image: jupyterlab-singleuser
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    container_name: jupyterlab_imgbuilder
+    networks:
+      - jupyter
+    command: echo
+
+  sidecar_netshoot:
+    container_name: netshooter
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    image: "nicolaka/netshoot:v0.11"
+    command: ["/bin/bash", "-c", "while true; do sleep 3600; done"]
+    networks:
+      - jupyter
+
+  reverse_proxy:
+    restart: on-failure
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - jupyter
+    image: "traefik:v2.10.4"
+    container_name: reverse_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/userdata/config/traefik:/etc/traefik"
+      - "/var/run/docker.sock:/var/run/docker.sock"
