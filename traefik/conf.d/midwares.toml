@@ -1,0 +1,19 @@
+[http.middlewares]
+    [http.middlewares.webbaauth.basicAuth]
+        headerField = "X-CDN-AAuthID"
+        removeHeader = true
+        realm = "CustomRealm"
+        usersFile = "/etc/traefik/certs/usersFile"
+    [http.middlewares.autodetect.contentType]
+        autoDetect = true
+    [http.middlewares.gzipcomp.compress]
+    [http.middlewares.antibot.rateLimit]
+        average = 120
+        burst = 240
+        period = "1m"
+    [http.middlewares.totalreqlim.inFlightReq]
+        amount = 300
+
+[tls.options]
+  [tls.options.default]
+    minVersion = "VersionTLS12"

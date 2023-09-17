@@ -1,0 +1,16 @@
+[http.routers]
+    [http.routers.trafikdbrd]
+        entryPoints = ["websecure"]
+        rule = "Host(`example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+        service = "api@internal"
+        middlewares = ["gzipcomp", "webbaauth"]
+
+
+[tls]
+    [[tls.certificates]]
+        certFile = "/etc/traefik/certs/fullchain.pem"
+        keyFile = "/etc/traefik/certs/privkey.pem"
+
+    [tls.options]
+    [tls.options.default]
+        minVersion = "VersionTLS12"
